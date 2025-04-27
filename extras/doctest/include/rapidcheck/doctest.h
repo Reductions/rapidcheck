@@ -1,11 +1,17 @@
 #pragma once
 
-#include <sstream>
 #include <source_location>
+#include <sstream>
 
 #include <rapidcheck.h>
 
 namespace rc::doctest {
+
+// ─── alias the real doctest namespace ────────────────────────────────────────
+namespace doctest = ::doctest;
+
+// ─── (optionally alias rc::detail too) ──────────────────────────────────────
+namespace rc_detail = ::rc::detail;
 
 /**
  * Checks the given predicate by applying it to randomly generated arguments.
@@ -36,35 +42,33 @@ namespace rc::doctest {
  *         this implementation is based.
  */
 template <class testable>
-void check(const char*          d,
-           testable&&           t,
-           bool                 v = false,
-           std::source_location s = std::source_location::current())
-{
-  using namespace rc::detail;
+void check(const char *d,
+           testable &&t,
+           bool v = false,
+           std::source_location s = std::source_location::current()) {
+  using namespace rc_detail;
+  using namespace doctest;
   using namespace doctest::detail;
 
-  DOCTEST_SUBCASE(d)
-  {
+  SUBCASE(d) {
     auto r = checkTestable(std::forward<testable>(t));
 
-    if (r.template is<SuccessResult>())
-    {
-      if (!r.template get<SuccessResult>().distribution.empty() || v)
-      {
+    if (r.template is<SuccessResult>()) {
+      if (!r.template get<SuccessResult>().distribution.empty() || v) {
         std::cout << "- " << d << std::endl;
         printResultMessage(r, std::cout);
         std::cout << std::endl;
       }
 
       REQUIRE(true);
-    }
-    else
-    {
+    } else {
       std::ostringstream o;
       printResultMessage(r, o << '\n');
-      DOCTEST_INFO(o.str());
-      ResultBuilder b(doctest::assertType::DT_CHECK, s.file_name(), s.line(), s.function_name());
+      INFO(o.str());
+      ResultBuilder b(doctest::assertType::DT_CHECK,
+                      s.file_name(),
+                      s.line(),
+                      s.function_name());
       DOCTEST_ASSERT_LOG_REACT_RETURN(b);
     }
   }
@@ -98,12 +102,10 @@ void check(const char*          d,
  *         this implementation is based.
  */
 template <class testable>
-inline
-void check(testable&&           t,
-           bool                 v = false,
-           std::source_location s = std::source_location::current())
-{
-  check("", t, v ,s);
+inline void check(testable &&t,
+                  bool v = false,
+                  std::source_location s = std::source_location::current()) {
+  check("", t, v, s);
 }
 
 } // namespace rc::doctest
